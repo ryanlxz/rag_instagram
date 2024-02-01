@@ -2,12 +2,16 @@ import instaloader
 from datetime import datetime
 from itertools import dropwhile, takewhile
 import csv
+import yaml
+
+with open("credentials.yml", "r") as file:
+    credentials = yaml.safe_load(file)
 
 
 class GetInstagramProfile:
     def __init__(self) -> None:
         self.L = instaloader.Instaloader()
-        self.L.login(USERNAME, PASSWORD)
+        self.L.login(credentials["USERNAME"], credentials["PASSWORD"])
 
     def download_users_profile_picture(self, username):
         self.L.download_profile(username, profile_pic_only=True)
@@ -115,4 +119,4 @@ if __name__ == "__main__":
     # cls.get_users_followers("best_gadgets_2030")
     # cls.get_users_followings("best_gadgets_2030")
     # cls.get_post_comments("laydline")
-    cls.get_post_info_csv(USERNAME)
+    # cls.get_post_info_csv(credentials["USERNAME"])

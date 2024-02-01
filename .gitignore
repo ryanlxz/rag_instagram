@@ -19,4 +19,4 @@ data/
 references/
 
 # ignore credentials
-credentials
+credentials*.*
