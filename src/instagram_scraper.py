@@ -69,7 +69,7 @@ class GetInstagramProfile:
                 print("post date: " + str(post.date))
                 print("post profile: " + post.profile)
                 print("post caption: " + post.caption)
-                print("post location: " + str(post.location))
+                # print("post location: " + str(post.location))
 
                 posturl = "https://www.instagram.com/p/" + post.shortcode
                 print("post url: " + posturl)
@@ -80,7 +80,7 @@ class GetInstagramProfile:
                         post.profile,
                         post.caption,
                         post.date,
-                        post.location,
+                        # post.location,
                         posturl,
                         post.typename,
                         post.mediacount,
