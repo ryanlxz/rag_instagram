@@ -3,9 +3,6 @@ from datetime import datetime
 from itertools import dropwhile, takewhile
 import csv
 
-USERNAME = "eatinara"
-PASSWORD = "eatoreat123"
-
 
 class GetInstagramProfile:
     def __init__(self) -> None:
