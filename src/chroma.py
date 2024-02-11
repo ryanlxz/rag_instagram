@@ -7,11 +7,14 @@ from chromadb.utils.data_loaders import ImageLoader
 
 class ChromaDb:
     def __init__(self) -> None:
-        self.client = chromadb.PersistentClient(path="/path/to/save/to")
+        self.client = chromadb.PersistentClient(path=conf["chromadb_path"])
+        # self.client = chromadb.PersistentClient(
+        #     path=conf[r"C:\Users\ryanl\Desktop\rag_instagram\data\chromadb"]
+        # )
         self.embedding_function = OpenCLIPEmbeddingFunction()
         image_loader = ImageLoader()
         self.collection = self.client.get_or_create_collection(
-            name="test",
+            name="eatinara",
             embedding_function=self.embedding_function,
             data_loader=image_loader,
         )
@@ -24,5 +27,9 @@ class ChromaDb:
         #         name="my_collection", embedding_function=emb_fn
         #     )
 
+    def add(self, documents: list, metadatas: list, ids: list):
+        self.collection.add(documents=documents, metadatas=metadatas, ids=ids)
 
-print(conf["chromadb_path"])
+
+if __name__ == "__main__":
+    chroma = ChromaDb()
