@@ -31,11 +31,12 @@ def sort_insta_posts(data_path: str) -> dict:
 
 
 def extract_metadata(posts_dict: dict):
-    """Rearranges list of files from each post to have the text file to be the first element. Extracts metadata from text files, and uses some of the metadata for the images from the same post.
-    Images metadata include post_id, cuisine, location, while text metadata include additional fields such as price, taste, worth-it,
+    """Rearranges list of files from each post to have the text file to be the first element.
+    Extracts metadata from text files, and uses some of the metadata for the images from the same post.
+    Images metadata include post_id, cuisine, location, while text metadata include additional fields such as price, taste, worth-it.
 
     Args:
-        posts_dict (dict): metadata dictionary for the texts and images.
+        posts_dict (dict): Nested metadata dictionary for all the texts and images.
     """
     all_metadata_dict = {}
     for post, files_list in posts_dict.items():
@@ -43,8 +44,9 @@ def extract_metadata(posts_dict: dict):
         text_file_index = files_list.index(f"{post}_UTC.txt")
         files_list.insert(0, files_list.pop(text_file_index))
         # extract and populate text metadata
-
+        text_metadata_dict = {}
         # fill up images metadata as first element is text
+        image_metadata_dict = {}
         for file in files_list[1:]:
             file_metadata_dict = {}
             file_metadata_dict["post_id"] = post
