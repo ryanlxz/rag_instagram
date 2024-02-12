@@ -1,16 +1,27 @@
 import ollama
 
 
-response = ollama.chat(
-    model="mistral",
-    messages=[
-        {
-            "role": "user",
-            "content": "Why is the sky blue?",
-        },
-    ],
-)
-print(response["message"]["content"])
+class MistralAgent:
+    def __init__(self, model: str) -> None:
+        # ollama.pull(model)
+        print(f"pulled {model}")
+
+    def query(self, prompt: str):
+        response = ollama.chat(
+            model="mistral",
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+        )
+        print(response["message"]["content"])
+
 
 if __name__ == "__main__":
-    ollama.pull("mistral")
+    mistral_agent = MistralAgent("mistral")
+    prompt = "where is hamburg keisuke in singapore?"
+    mistral_agent.query(prompt)
+
+
