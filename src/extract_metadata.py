@@ -3,6 +3,8 @@ from pathlib import Path
 import yaml
 from extractor import Extractor
 from typing import Tuple, List
+import numpy as np
+from PIL import Image
 
 with open("credentials.yml", "r") as file:
     credentials = yaml.safe_load(file)
@@ -21,7 +23,6 @@ def sort_insta_posts(data_path: str) -> dict:
     Returns:
         dict: dictionary of sorted instagram posts
     """
-    data_extractor = Extractor()
     file_list = os.listdir(data_path)
     file_list = sorted(file_list)
     posts_dict = {}
@@ -32,7 +33,8 @@ def sort_insta_posts(data_path: str) -> dict:
             text = open_text_file(
                 data_folder_path=Path(f"data/{credentials['USERNAME']}"), file_name=f
             )
-            taste = data_extractor.extract_taste(text)
+            data_extractor = Extractor(text)
+            taste = data_extractor.extract_taste()
             if not taste:
                 post_list.extend(add_files_from_same_post(file_list, f_name))
             else:
@@ -42,15 +44,24 @@ def sort_insta_posts(data_path: str) -> dict:
     return posts_dict
 
 
-def extract_metadata(posts_dict: dict):
-    """Rearranges list of files from each post to have the text file to be the first element.
+def extract_metadata(
+    posts_dict: dict,
+) -> Tuple[List[str], List[dict], List[str], List[np.array], List[dict], List[str]]:
+    """Separates list of files from each post into a text list and an image list.
     Extracts metadata from text files, and uses some of the metadata for the images from the same post.
     Images metadata include post_id, cuisine, location, while text metadata include additional fields such as price, taste, worth-it.
 
     Args:
-        posts_dict (dict): Nested metadata dictionary for all the texts and images.
+        posts_dict (dict): Dictionary containing all the text and image files, sorted by each post as the keys.
     """
-    data_extractor = Extractor()
+    (
+        text_documents_list,
+        text_metadata_list,
+        text_id_list,
+        image_documents_list,
+        image_metadata_list,
+        image_id_list,
+    ) = ([], [], [], [], [], [])
     for post, files_list in posts_dict.items():
         # extract and populate text metadata
         text_list, image_list = get_text_and_image_files(files_list)
@@ -61,14 +72,43 @@ def extract_metadata(posts_dict: dict):
                 data_folder_path=Path(f"data/{credentials['USERNAME']}"),
                 file_name=text_list[0],
             )
-        # use encoding 'utf-8' for chinese characters
-        taste = data_extractor.extract_taste(text)
-        print(post, taste)
-        # fill up images metadata as first element is text
-        image_metadata_dict = {}
-        for file in files_list[1:]:
-            file_metadata_dict = {}
-            file_metadata_dict["post_id"] = post
+        text_documents_list.append(text)
+        text_id_list.append(f"{post}_text")
+        text_metadata_dict = extract_text_metadata(text)
+        text_metadata_list.append(text_metadata_dict)
+        # images
+        cuisine = text_metadata_dict["cuisine"]
+        location = text_metadata_dict["location"]
+        data_folder_path = Path(f"data/{credentials['USERNAME']}")
+        for num, image in enumerate(image_list):
+            img = Image.open(Path(data_folder_path, image))
+            img_array = np.array(img)
+            image_documents_list.append(img_array)
+            image_id_list.append(f"{post}_img_{num}")
+            image_metadata_dict = {"cuisine": cuisine, "location": location}
+            image_metadata_list.append(image_metadata_dict)
+    return (
+        text_documents_list,
+        text_metadata_list,
+        text_id_list,
+        image_documents_list,
+        image_metadata_list,
+        image_id_list,
+    )
+
+    # returns 3 lists
+    # documents=["lorem ipsum...", "doc2", "doc3", ...],
+    # metadatas=[{"chapter": "3", "verse": "16"}, {"chapter": "3", "verse": "5"}, {"chapter": "29", "verse": "11"}, ...],
+    # ids=["id1", "id2", "id3", ...]
+
+
+def extract_text_metadata(text: str) -> dict:
+    data_extractor = Extractor(text)
+    taste = data_extractor.extract_taste()
+    cuisine = data_extractor.extract_cuisine()
+    location = data_extractor.extract_location()
+    text_metadata_dict = {"taste": taste, "cuisine": cuisine, "location": location}
+    return text_metadata_dict
 
 
 def open_text_file(data_folder_path: str, file_name: str) -> str:
@@ -142,4 +182,11 @@ def combine_text_files(text_list: list) -> str:
 
 if __name__ == "__main__":
     posts_dict = sort_insta_posts(f"./data/{credentials['USERNAME']}")
-    extract_metadata(posts_dict=posts_dict)
+    (
+        text_documents_list,
+        text_metadata_list,
+        text_id_list,
+        image_documents_list,
+        image_metadata_list,
+        image_id_list,
+    ) = extract_metadata(posts_dict=posts_dict)
