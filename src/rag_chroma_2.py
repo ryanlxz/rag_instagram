@@ -34,7 +34,7 @@ class RagChroma:
     def __init__(self, collection: str) -> None:
         image_loader = ImageLoader()
         # image_embedding_model = embedding_functions.HuggingFaceEmbeddingFunction(
-        #     api_key="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",
+        #     api_key="",
         #     model_name="openai/clip-vit-base-patch32",
         # )
         image_embedding_model = OpenCLIPEmbeddingFunction()
@@ -50,10 +50,6 @@ class RagChroma:
         Settings.llm = Ollama(model="mistral", request_timeout=60.0)
         embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
         Settings.embed_model = embed_model
-        # Settings.embed_model = embedding_functions.HuggingFaceEmbeddingFunction(
-        #     model_name="BAAI/bge-small-en-v1.5",
-        #     api_key="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",
-        # )
 
     def add(
         self,
