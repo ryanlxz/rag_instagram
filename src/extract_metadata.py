@@ -4,7 +4,12 @@ import yaml
 from extractor import Extractor
 from typing import Tuple, List
 import numpy as np
+import json
 from PIL import Image
+from transformers import CLIPProcessor, CLIPModel
+
+model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
 
 with open("credentials.yml", "r") as file:
     credentials = yaml.safe_load(file)
@@ -61,7 +66,9 @@ def extract_metadata(
         image_documents_list,
         image_metadata_list,
         image_id_list,
-    ) = ([], [], [], [], [], [])
+        image_embedding_list,
+        uri_list,
+    ) = ([], [], [], [], [], [], [], [])
     for post, files_list in posts_dict.items():
         # extract and populate text metadata
         text_list, image_list = get_text_and_image_files(files_list)
@@ -76,14 +83,20 @@ def extract_metadata(
         text_id_list.append(f"{post}_text")
         text_metadata_dict = extract_text_metadata(text)
         text_metadata_list.append(text_metadata_dict)
+
         # images
         cuisine = text_metadata_dict["cuisine"]
         location = text_metadata_dict["location"]
         data_folder_path = Path(f"data/{credentials['USERNAME']}")
         for num, image in enumerate(image_list):
             img = Image.open(Path(data_folder_path, image))
+            uri_list.append(str(Path(data_folder_path, image)))
+            # img_array = processor(images=img, return_tensors="pt")
+            # img_embedding = model.get_image_features(**img_array)
+            # image_embedding_list.append(img_embedding.squeeze().tolist())
             img_array = np.array(img)
             image_documents_list.append(img_array)
+            # image_documents_list.append(img_array)
             image_id_list.append(f"{post}_img_{num}")
             image_metadata_dict = {"cuisine": cuisine, "location": location}
             image_metadata_list.append(image_metadata_dict)
@@ -94,6 +107,8 @@ def extract_metadata(
         image_documents_list,
         image_metadata_list,
         image_id_list,
+        image_embedding_list,
+        uri_list,
     )
 
     # returns 3 lists
@@ -181,7 +196,9 @@ def combine_text_files(text_list: list) -> str:
 
 
 if __name__ == "__main__":
-    posts_dict = sort_insta_posts(f"./data/{credentials['USERNAME']}")
+    folder_name = "eatinara_data"
+    # posts_dict = sort_insta_posts(f"./data/{credentials['USERNAME']}")
+    posts_dict = sort_insta_posts(f"./data/{folder_name}")
     (
         text_documents_list,
         text_metadata_list,
