@@ -1,0 +1,50 @@
+version: 1
+formatters:
+  simple:
+    format: "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+    datefmt: "%d/%m/%Y %H:%M"
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: simple
+    stream: ext://sys.stdout
+    
+  info_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: simple
+    filename: logs/log_files/info.log #Has to be relative path
+    maxBytes: 1073741824 # 1GB
+    backupCount: 20
+    encoding: utf8
+    delay: True
+
+  error_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: ERROR
+    formatter: simple
+    filename: logs/log_files/error.log #Has to be relative path
+    maxBytes: 10485760 # 10MB
+    backupCount: 20
+    encoding: utf8
+    delay: True
+
+  debug_file_handler:
+    class: logging.handlers.RotatingFileHandler
+    level: DEBUG
+    formatter: simple
+    filename: ./logs/log_files/debug.log #Has to be relative path
+    maxBytes: 10485760 # 10MB
+    backupCount: 20
+    encoding: utf8
+    delay: True
+    
+loggers:
+  Rag_Instagram:
+    level: INFO #DEBUG
+    handlers: [info_file_handler, error_file_handler, debug_file_handler, console]
+    propagate: no
+root:
+  level: DEBUG
+  handlers: [console]
