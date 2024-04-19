@@ -5,6 +5,8 @@ from itertools import dropwhile, takewhile
 import instaloader
 import yaml
 
+from logs.logging import logger
+
 with open("credentials.yml", "r") as file:
     credentials = yaml.safe_load(file)
 

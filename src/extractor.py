@@ -1,6 +1,7 @@
 import re
-from ollama_mistral import MistralAgent
+from .ollama_mistral import MistralAgent
 from typing import Union
+from logs.logging import logger
 
 mistral_agent = MistralAgent("mistral")
 

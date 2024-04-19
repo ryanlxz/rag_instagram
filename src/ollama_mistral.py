@@ -1,4 +1,5 @@
 import ollama
+from logs.logging import logger
 
 
 class MistralAgent:

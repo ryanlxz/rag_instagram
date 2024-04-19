@@ -1,12 +1,13 @@
 import os
 from pathlib import Path
 import yaml
-from extractor import Extractor
+from .extractor import Extractor
 from typing import Tuple, List
 import numpy as np
 import json
 from PIL import Image
 from transformers import CLIPProcessor, CLIPModel
+from logs.logging import logger
 
 model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
 processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
@@ -66,9 +67,8 @@ def extract_metadata(
         image_documents_list,
         image_metadata_list,
         image_id_list,
-        image_embedding_list,
         uri_list,
-    ) = ([], [], [], [], [], [], [], [])
+    ) = ([], [], [], [], [], [], [])
     for post, files_list in posts_dict.items():
         # extract and populate text metadata
         text_list, image_list = get_text_and_image_files(files_list)
@@ -91,12 +91,8 @@ def extract_metadata(
         for num, image in enumerate(image_list):
             img = Image.open(Path(data_folder_path, image))
             uri_list.append(str(Path(data_folder_path, image)))
-            # img_array = processor(images=img, return_tensors="pt")
-            # img_embedding = model.get_image_features(**img_array)
-            # image_embedding_list.append(img_embedding.squeeze().tolist())
             img_array = np.array(img)
             image_documents_list.append(img_array)
-            # image_documents_list.append(img_array)
             image_id_list.append(f"{post}_img_{num}")
             image_metadata_dict = {"cuisine": cuisine, "location": location}
             image_metadata_list.append(image_metadata_dict)
@@ -107,7 +103,6 @@ def extract_metadata(
         image_documents_list,
         image_metadata_list,
         image_id_list,
-        image_embedding_list,
         uri_list,
     )
 
@@ -198,12 +193,3 @@ def combine_text_files(text_list: list) -> str:
 if __name__ == "__main__":
     folder_name = "eatinara_data"
     # posts_dict = sort_insta_posts(f"./data/{credentials['USERNAME']}")
-    posts_dict = sort_insta_posts(f"./data/{folder_name}")
-    (
-        text_documents_list,
-        text_metadata_list,
-        text_id_list,
-        image_documents_list,
-        image_metadata_list,
-        image_id_list,
-    ) = extract_metadata(posts_dict=posts_dict)

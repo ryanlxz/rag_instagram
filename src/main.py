@@ -1,13 +1,13 @@
-# from rag_chroma import RagChroma
-from rag_chroma_2 import RagChroma
-from extract_metadata import sort_insta_posts, extract_metadata
+from .rag_chroma import RagChroma
+from .extract_metadata import sort_insta_posts, extract_metadata
 import yaml
 import os
 import urllib3
+from logs.logging import logger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-os.environ["CURL_CA_BUNDLE"] = ""
+# os.environ["CURL_CA_BUNDLE"] = ""
 
 with open("credentials.yml", "r") as file:
     credentials = yaml.safe_load(file)
@@ -24,10 +24,9 @@ if __name__ == "__main__":
         image_documents_list,
         image_metadata_list,
         image_id_list,
-        image_embedding_list,
         uri_list,
     ) = extract_metadata(posts_dict=posts_dict)
-    print("completed metadata extraction")
+    logger.info("completed metadata extraction")
     rag_client.add(
         text_documents_list=text_documents_list,
         text_metadata_list=text_metadata_list,
@@ -35,9 +34,14 @@ if __name__ == "__main__":
         image_documents_list=image_documents_list,
         image_metadata_list=image_metadata_list,
         image_id_list=image_id_list,
-        image_embedding_list=image_embedding_list,
         uri_list=uri_list,
     )
+    results = rag_client.image_collection.query(
+        query_texts=["corn"],
+        n_results=5,
+        include=["distances", "uris"],
+    )
+    print(results)
     # print("added documents to chromadb")
     # print(rag_client.query_index("what is the best japanese food?"))
     # rag_client.get_documents()
