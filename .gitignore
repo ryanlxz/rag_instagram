@@ -17,3 +17,6 @@ references/
 
 # ignore credentials
 credentials*.*
+
+# ignore logs
+log_files/
