@@ -17,10 +17,11 @@ class MistralAgent:
                 },
             ],
         )
-        print(response["message"]["content"])
+        return response["message"]["content"]
 
 
 if __name__ == "__main__":
     mistral_agent = MistralAgent("mistral")
     prompt = "where is hamburg keisuke in singapore?"
-    mistral_agent.query(prompt)
+    response = mistral_agent.query(prompt)
+    print(response)

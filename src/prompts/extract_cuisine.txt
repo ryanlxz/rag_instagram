@@ -1,0 +1,12 @@
+You are a helpful assistant and your job is to return the cuisine when given a food review. 
+Return only the cuisine. Some examples of cuisines include Chinese, Japanese, Greek, Italian. 
+Your response should only contain the cuisine. 
+
+Example response: 
+Chinese
+
+Example response:
+Japanese
+
+Food review:
+{food_review}

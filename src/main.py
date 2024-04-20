@@ -1,13 +1,7 @@
 from .rag_chroma import RagChroma
 from .extract_metadata import sort_insta_posts, extract_metadata
 import yaml
-import os
-import urllib3
 from logs.logging import logger
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-# os.environ["CURL_CA_BUNDLE"] = ""
 
 with open("credentials.yml", "r") as file:
     credentials = yaml.safe_load(file)

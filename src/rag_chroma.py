@@ -14,7 +14,8 @@ from llama_index.core import (
     get_response_synthesizer,
     ServiceContext,
 )
-
+from llama_index.core.retrievers import VectorIndexAutoRetriever
+from llama_index.core.vector_stores.types import MetadataInfo, VectorStoreInfo
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.response.notebook_utils import display_source_node
 from llama_index.core.retrievers import VectorIndexRetriever
@@ -24,8 +25,6 @@ import chromadb.utils.embedding_functions as embedding_functions
 from chromadb.utils.embedding_functions import OpenCLIPEmbeddingFunction
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from conf import conf
-
-# os.environ["CURL_CA_BUNDLE"] = ""
 
 
 class RagChroma:
@@ -42,8 +41,7 @@ class RagChroma:
             data_loader=image_loader,
         )
         Settings.llm = Ollama(model="mistral", request_timeout=60.0)
-        embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
-        Settings.embed_model = embed_model
+        Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
 
     def add(
         self,
@@ -97,12 +95,19 @@ class RagChroma:
         logger.info("loaded index")
         return index
 
-    def get_documents(self):
-        document_collection = self.collection.get()
+    def get_documents(self, collection: str, ids: List[str] = None):
+        if collection == "image":
+            document_collection = self.image_collection.get(ids=ids)
+        elif collection == "text":
+            document_collection = self.text_collection.get(ids=ids)
+        else:
+            logger.debug(
+                f"Invalid collection {collection}. Accepts either 'image' or 'text'."
+            )
         print(document_collection)
         return document_collection
 
-    def plot_images(self):
+    def plot_images(self, image_path:str):
         images_shown = 0
         plt.figure(figsize=(16, 9))
         for img_path in image_paths:
@@ -120,20 +125,30 @@ class RagChroma:
 
     def query_index(self, query: str):
         index = self._load_index()
-        # retriever = VectorIndexRetriever(
-        #     index=index,
-        #     similarity_top_k=3,
-        #     # image_similarity_top_k=5
-        # )
+        vector_store_info = VectorStoreInfo(
+            content_info="food review",
+            metadata_info=[
+                MetadataInfo(
+                    name="cuisine",
+                    type="str",
+                    description=(
+                        "Cuisine of the food, one of [Sports, Entertainment,"
+                        " Business, Music]"
+                    ),
+                ),
+                MetadataInfo(
+                    name="country",
+                    type="str",
+                    description=(
+                        "Country of the celebrity, one of [United States, Barbados,"
+                        " Portugal]"
+                    ),
+                ),
+            ],
+        )
+        retriever = VectorIndexAutoRetriever(index, vector_store_info=vector_store_info)
 
-        retriever = index.as_retriever(similarity_top_k=2, image_similarity_top_k=1)
         retrieval_results = retriever.retrieve(query)
-        # retrieved_image = []
-        # for res_node in retrieval_results:
-        #     if isinstance(res_node.node, ImageNode):
-        #         retrieved_image.append(res_node.node.metadata["file_path"])
-        #     else:
-        #         display_source_node(res_node, source_length=200)
 
         # response_synthesizer = get_response_synthesizer(
         #     response_mode="tree_summarize", streaming=True
@@ -151,6 +166,22 @@ class RagChroma:
         # return generate()
         return retrieval_results
 
+    def query_image_collection(self, query_text: str):
+        """queries the image collection with query_text. After a user inputs a prompt, extract the key words from the prompt and pass them as the query_text.
+
+        Args:
+            query_text (str): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        results = self.image_collection.query(
+            query_texts=[query_text],
+            n_results=5,
+            include=["distances", "uris"],
+        )
+        return results
+
     def delete_documents(self, ids: List[str]):
         self.collection.delete(ids=ids)
 
@@ -161,4 +192,6 @@ class RagChroma:
 
 if __name__ == "__main__":
     rag_client = RagChroma("eatinara")
+    # print(rag_client.query_image_collection(query_text="corn"))
+    rag_client.get_documents(collection="text", ids=["2020-05-29_10-30-00_text"])
     # rag_client.delete_collection("eatinara")

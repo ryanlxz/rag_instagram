@@ -1,16 +1,15 @@
+import json
 import os
 from pathlib import Path
-import yaml
-from .extractor import Extractor
-from typing import Tuple, List
+from typing import List, Tuple
+
 import numpy as np
-import json
+import yaml
 from PIL import Image
-from transformers import CLIPProcessor, CLIPModel
+
 from logs.logging import logger
 
-model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+from .extractor import Extractor
 
 with open("credentials.yml", "r") as file:
     credentials = yaml.safe_load(file)
@@ -115,9 +114,17 @@ def extract_metadata(
 def extract_text_metadata(text: str) -> dict:
     data_extractor = Extractor(text)
     taste = data_extractor.extract_taste()
+    price = data_extractor.extract_price()
+    worth_it = data_extractor.extract_worth_it()
     cuisine = data_extractor.extract_cuisine()
     location = data_extractor.extract_location()
-    text_metadata_dict = {"taste": taste, "cuisine": cuisine, "location": location}
+    text_metadata_dict = {
+        "taste": taste,
+        "price": price,
+        "worth_it": worth_it,
+        "cuisine": cuisine,
+        "location": location,
+    }
     return text_metadata_dict
 
 
