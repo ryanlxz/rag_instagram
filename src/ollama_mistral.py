@@ -1,15 +1,17 @@
 import ollama
 from logs.logging import logger
+from conf import conf
 
 
 class MistralAgent:
-    def __init__(self, model: str) -> None:
+    def __init__(self, model: str = conf["llm"]) -> None:
+        self.model = model
         # ollama.pull(model)
         pass
 
     def query(self, prompt: str):
         response = ollama.chat(
-            model="mistral",
+            model=self.model,
             messages=[
                 {
                     "role": "user",

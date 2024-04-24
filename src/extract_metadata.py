@@ -79,7 +79,7 @@ def extract_metadata(
                 file_name=text_list[0],
             )
         text_documents_list.append(text)
-        text_id_list.append(f"{post}_text")
+        text_id_list.append(f"{post}")
         text_metadata_dict = extract_text_metadata(text)
         text_metadata_list.append(text_metadata_dict)
 
@@ -92,7 +92,7 @@ def extract_metadata(
             uri_list.append(str(Path(data_folder_path, image)))
             img_array = np.array(img)
             image_documents_list.append(img_array)
-            image_id_list.append(f"{post}_img_{num}")
+            image_id_list.append(f"{post}_{num}")
             image_metadata_dict = {"cuisine": cuisine, "location": location}
             image_metadata_list.append(image_metadata_dict)
     return (
