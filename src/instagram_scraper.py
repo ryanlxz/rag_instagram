@@ -1,10 +1,11 @@
 import csv
 from datetime import datetime
 from itertools import dropwhile, takewhile
-
+from pathlib import Path
 import instaloader
 import yaml
-
+import os
+from conf import conf
 from logs.logging import logger
 
 with open("credentials.yml", "r") as file:
@@ -26,10 +27,13 @@ class GetInstagramProfile:
         Args:
             username (str): Instagram username
         """
+        data_path = Path("./data")
+        data_path.mkdir(parents=True, exist_ok=True)
         posts = instaloader.Profile.from_username(self.L.context, username).get_posts()
-        SINCE = datetime(2019, 8, 28)
-        UNTIL = datetime(2024, 9, 30)
+        SINCE = datetime.strptime((conf["start_date"]), "%Y-%m-%d")
+        UNTIL = datetime.strptime((conf["end_date"]), "%Y-%m-%d")
 
+        os.chdir(data_path)
         for post in takewhile(
             lambda p: p.date > SINCE, dropwhile(lambda p: p.date > UNTIL, posts)
         ):
