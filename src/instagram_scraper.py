@@ -1,5 +1,5 @@
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import dropwhile, takewhile
 from pathlib import Path
 import instaloader
@@ -76,12 +76,12 @@ class GetInstagramProfile:
             file_datetime_list.append(file_datetime)
         file_datetime_list.sort(reverse=True)
         latest_file_datetime = file_datetime_list[0]
-        print(latest_file_datetime)
+        start_date = latest_file_datetime + timedelta(minutes=1)
+        # start_date = start_date.strftime("%Y-%m-%d %H:%M:%S")
         end_date = datetime.today()
-        # formatted_end_date = end_date.strftime("%Y-%m-%-d")
         self.download_posts(
-            data_path=folder,
-            start_date=latest_file_datetime,
+            data_path=Path("./data"),
+            start_date=start_date,
             end_date=end_date,
             username=username,
         )
