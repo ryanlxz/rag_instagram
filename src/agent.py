@@ -3,11 +3,14 @@ from logs.logging import logger
 from conf import conf
 
 
-class MistralAgent:
+class Agent:
     def __init__(self, model: str = conf["llm"]) -> None:
+        try:
+            ollama.show(model)
+        except ollama._types.ResponseError:
+            logger.info(f"pulling model {model} from ollama")
+            ollama.pull(model)
         self.model = model
-        # ollama.pull(model)
-        pass
 
     def query(self, prompt: str):
         response = ollama.chat(
@@ -23,7 +26,7 @@ class MistralAgent:
 
 
 if __name__ == "__main__":
-    mistral_agent = MistralAgent("mistral")
+    agent = Agent("llama3")
     prompt = "where is hamburg keisuke in singapore?"
-    response = mistral_agent.query(prompt)
+    response = agent.query(prompt)
     print(response)
