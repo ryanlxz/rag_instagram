@@ -21,7 +21,7 @@ class GetInstagramProfile:
         self.L.download_profile(username, profile_pic_only=True)
 
     def download_posts(
-        self, data_path: str, start_date: str, end_date: str, username: str
+        self, data_path: str, start_date: datetime, end_date: datetime, username: str
     ):
         """downloads posts from start_date to end_date into the data_path
 
@@ -36,6 +36,7 @@ class GetInstagramProfile:
         for post in takewhile(
             lambda p: p.date > start_date, dropwhile(lambda p: p.date > end_date, posts)
         ):
+            logger.info(post.comments)
             self.L.download_post(post, username)
         logger.info(f"downloaded {username} posts")
 
@@ -57,7 +58,7 @@ class GetInstagramProfile:
             username=username,
         )
 
-    def update_downloaded_posts(self, username: str):
+    def update_downloaded_posts(self, username: str = credentials["USERNAME"]):
         """Update the downloaded posts by downloading the latest posts. First, check for the latest
         file in the data folder, and then download the latest posts continuing from there.
 
@@ -77,7 +78,7 @@ class GetInstagramProfile:
         file_datetime_list.sort(reverse=True)
         latest_file_datetime = file_datetime_list[0]
         start_date = latest_file_datetime + timedelta(minutes=1)
-        # start_date = start_date.strftime("%Y-%m-%d %H:%M:%S")
+        # try rounding to nearest second to download posts (must be datetime object)
         end_date = datetime.today()
         self.download_posts(
             data_path=Path("./data"),
@@ -85,6 +86,7 @@ class GetInstagramProfile:
             end_date=end_date,
             username=username,
         )
+        logger.info(f"updated {username} posts")
 
     def download_hastag_posts(self, hashtag):
         for post in instaloader.Hashtag.from_name(self.L.context, hashtag).get_posts():
