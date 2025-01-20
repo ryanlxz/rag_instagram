@@ -1,4 +1,6 @@
 chromadb_path: "./data/chromadb"
+collection_name: 'eatinara'
 start_date: '2019-8-28'
 end_date: '2100-8-8'
 llm: 'llama3'
+monitor_file_count_interval: 60

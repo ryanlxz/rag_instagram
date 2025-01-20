@@ -7,8 +7,11 @@ from pydantic import BaseModel
 from conf import conf
 from src.rag_chroma import RagChroma
 from fastapi.middleware.cors import CORSMiddleware
+
 from src.instagram_scraper import GetInstagramProfile
+from src.utils import monitor_file_count
 from logs.logging import logger
+import asyncio
 
 
 @asynccontextmanager
@@ -17,6 +20,12 @@ async def lifespan(app: FastAPI):
     app.state.instagram_scraper = GetInstagramProfile()
     # Start the rag client
     app.state.rag_client = RagChroma(conf["collection_name"])
+    # Start updating posts
+    monitor_task = asyncio.create_task(monitor_file_count())
+    update_task = asyncio.create_task(update_posts())
+    await monitor_task
+    update_task.cancel()
+    logger.info("update_posts task cancelled")
     yield
 
 
@@ -31,7 +40,6 @@ app.add_middleware(
 )
 
 
-@app.get("/update_posts")
 async def update_posts():
     await app.state.instagram_scraper.update_downloaded_posts()
 
