@@ -15,6 +15,12 @@ In the root project folder:
     - PASSWORD: password
 2. Run `instagram_scraper.py`, which will scrape the instagram posts which may include text files, images, and videos. This process may take a while depending on the amount of posts and files associated with each post, due to the query limit even though you are logged into your account. 
 These scraped files are saved in a folder named as the instagram username. Transfer this folder into the `data` folder. 
+3. Run `rag_chroma.py` to create a vector database and query the instagram posts. 
+4. Run `conda install pytorch torchvision`
+
+## Start-up
+Run backend server: `python -m src.server.main`
+Run streamlit frontend: `streamlit run src/server/streamlit_frontend.py`
 
 
 
