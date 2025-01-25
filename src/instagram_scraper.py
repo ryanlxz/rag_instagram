@@ -40,6 +40,52 @@ class GetInstagramProfile:
             self.L.download_post(post, username)
         logger.info(f"downloaded {username} posts")
 
+    def download_and_update_posts(self, username: str = credentials["USERNAME"]):
+        """Downloads all posts if no previous downloads exist, or updates by downloading
+        only the latest posts if previous downloads are found.
+
+        Args:
+            username (str): Instagram username
+        """
+        data_path = Path("./data")
+        data_path.mkdir(parents=True, exist_ok=True)
+        folder = Path(f"./data/{username}")
+
+        end_date = datetime.today()
+
+        if not folder.exists() or not any(folder.iterdir()):
+            # No previous downloads - download all posts
+            logger.info(
+                f"No existing posts found. Downloading all posts for {username}"
+            )
+            self.download_posts(
+                data_path=data_path,
+                start_date=datetime.strptime(conf["start_date"], "%Y-%m-%d"),
+                end_date=end_date,
+                username=username,
+            )
+        else:
+            # Update existing downloads
+            files = [f for f in folder.iterdir() if f.is_file()]
+            file_datetime_list = []
+            for file in files:
+                datetime_str = file.name.split("_UTC")[0]
+                file_datetime = datetime.strptime(datetime_str, "%Y-%m-%d_%H-%M-%S")
+                file_datetime_list.append(file_datetime)
+            file_datetime_list.sort(reverse=True)
+            latest_file_datetime = file_datetime_list[0]
+            start_date = latest_file_datetime + timedelta(minutes=1)
+
+            logger.info(f"Updating posts for {username} from {start_date}")
+            self.download_posts(
+                data_path=data_path,
+                start_date=start_date,
+                end_date=end_date,
+                username=username,
+            )
+
+        logger.info(f"Completed downloading/updating posts for {username}")
+
     def download_user_posts(self, username: str):
         """Creates a new folder that is named as the Instagram Username, and downloads all the posts - text file, pictures in jpg, video in mp4.
         These files are named by the date posted.
