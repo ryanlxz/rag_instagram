@@ -28,7 +28,7 @@ def sort_insta_posts(data_path: str) -> dict:
     Returns:
         dict: dictionary of sorted instagram posts
     """
-    file_list = os.listdir(data_path)
+    file_list = os.listdir(f"{os.curdir}/{data_path}")
     file_list = sorted(file_list)
     posts_dict = {}
     post_list = []

@@ -12,7 +12,7 @@ if __name__ == "__main__":
     cls = GetInstagramProfile()
     cls.download_and_update_posts(USERNAME)
     rag_client = RagChroma(USERNAME)
-    posts_dict = sort_insta_posts(f"./data/USERNAME")
+    posts_dict = sort_insta_posts(f"data/{USERNAME}")
     # posts_dict = sort_insta_posts(f"./data/{credentials['USERNAME']}")
     (
         text_documents_list,
