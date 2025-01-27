@@ -32,12 +32,14 @@ class GetInstagramProfile:
             username (str): instagram username
         """
         posts = instaloader.Profile.from_username(self.L.context, username).get_posts()
+        original_dir = os.getcwd()
         os.chdir(data_path)
         for post in takewhile(
             lambda p: p.date > start_date, dropwhile(lambda p: p.date > end_date, posts)
         ):
             logger.info(post.comments)
             self.L.download_post(post, username)
+        os.chdir(original_dir)
         logger.info(f"downloaded {username} posts")
 
     def download_and_update_posts(self, username: str = credentials["USERNAME"]):
