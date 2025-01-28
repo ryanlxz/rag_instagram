@@ -1,5 +1,5 @@
 import re
-from .ollama_mistral import MistralAgent
+from .agent import Agent
 from typing import Union
 from logs.logging import logger
 from .prompt import PromptLoader
@@ -13,7 +13,7 @@ class Extractor:
         self.cuisine_prompt = self.prompts.extract_cuisine
         self.price_prompt = self.prompts.extract_price
         self.text = text
-        self.agent = MistralAgent("mistral")
+        self.agent = Agent()
 
     def extract_cuisine(self):
         query = self.cuisine_prompt.format(food_review=self.text)
@@ -30,6 +30,7 @@ class Extractor:
             print(price_output)
             return price_output
         else:
+            logger.error(f"No price found in {self.text}")
             return price
 
     def extract_taste(self) -> Union[str, None]:
@@ -53,6 +54,7 @@ class Extractor:
         if worth_it:
             return worth_it[0]
         else:
+            logger.error(f"No worth-it rating found in {self.text}")
             return worth_it
 
     def extract_location(self):
@@ -61,4 +63,5 @@ class Extractor:
         if location:
             return location[0]
         else:
+            logger.error(f"No location found in {self.text}")
             return location
