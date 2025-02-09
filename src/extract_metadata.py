@@ -26,12 +26,13 @@ def sort_insta_posts(data_path: str) -> dict:
         data_path (str): directory path of the instagram posts
 
     Returns:
-        dict: dictionary of sorted instagram posts
+        Tuple[dict,int]: dictionary of sorted instagram posts, and counter of posts without 'Taste' field (potential multi-part reviews)
     """
     file_list = os.listdir(f"{os.curdir}/{data_path}")
     file_list = sorted(file_list)
     posts_dict = {}
     post_list = []
+    multi_part_review_counter = 0
     for f in file_list:
         if f.lower().endswith("txt"):
             f_name = f.split("_UTC")[0]
@@ -42,11 +43,12 @@ def sort_insta_posts(data_path: str) -> dict:
             taste = data_extractor.extract_taste()
             if not taste:
                 post_list.extend(add_files_from_same_post(file_list, f_name))
+                multi_part_review_counter += 1
             else:
                 post_list.extend(add_files_from_same_post(file_list, f_name))
                 posts_dict[f_name] = post_list
                 post_list = []
-    return posts_dict
+    return posts_dict, multi_part_review_counter
 
 
 def extract_metadata(
@@ -114,13 +116,13 @@ def extract_metadata(
 def extract_text_metadata(text: str) -> dict:
     data_extractor = Extractor(text)
     taste = data_extractor.extract_taste()
-    price = data_extractor.extract_price()
+    # price = data_extractor.extract_price()
     worth_it = data_extractor.extract_worth_it()
     cuisine = data_extractor.extract_cuisine()
     location = data_extractor.extract_location()
     text_metadata_dict = {
         "taste": taste,
-        "price": price,
+        # "price": price,
         "worth_it": worth_it,
         "cuisine": cuisine,
         "location": location,
