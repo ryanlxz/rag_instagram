@@ -17,7 +17,7 @@ class Extractor:
 
     def extract_cuisine(self):
         query = self.cuisine_prompt.format(food_review=self.text)
-        cuisine = self.agent.query(query)
+        cuisine = self.agent.extract_fields(query)
         return cuisine
 
     def extract_price(self):
@@ -26,11 +26,11 @@ class Extractor:
         if price:
             print(price[0])
             query = self.price_prompt.format(price_list=price[0])
-            price_output = self.agent.query(query)
+            price_output = self.agent.extract_fields(query)
             print(price_output)
             return price_output
         else:
-            logger.error(f"No price found in {self.text}")
+            logger.error(f"No price rating found in {self.text}")
             return price
 
     def extract_taste(self) -> Union[str, None]:
@@ -46,6 +46,7 @@ class Extractor:
         if taste:
             return taste[0]
         else:
+            logger.error(f"No taste rating found in {self.text}")
             return taste
 
     def extract_worth_it(self):

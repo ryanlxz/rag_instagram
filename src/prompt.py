@@ -14,6 +14,7 @@ class PromptLoader:
             filepath="src/prompts/extract_cuisine.txt"
         )
         self.extract_price = self.load_prompt(filepath="src/prompts/extract_price.txt")
+        self.system_prompt = self.load_prompt(filepath="src/prompts/system_prompt.txt")
 
     def load_prompt(self, filepath: str) -> str:
         """

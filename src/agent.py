@@ -1,6 +1,7 @@
 import ollama
 from logs.logging import logger
 from conf import conf
+from .prompt import PromptLoader
 
 
 class Agent:
@@ -11,11 +12,45 @@ class Agent:
             logger.info(f"pulling model {model} from ollama")
             ollama.pull(model)
         self.model = model
+        self.prompts = PromptLoader()
+        self.system_prompt = self.prompts.system_prompt
 
-    def query(self, prompt: str):
+    def extract_fields(self, prompt: str) -> str:
+        """extracts fields such as price and cuisine.
+
+        Args:
+            prompt (str): instagram post
+
+        Returns:
+            str: llm response
+        """
         response = ollama.chat(
             model=self.model,
             messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+        )
+        return response["message"]["content"]
+
+    def query(self, prompt: str) -> str:
+        """responds to a user's query. Contains a system prompt to help guide the llm response
+
+        Args:
+            prompt (str): user query
+
+        Returns:
+            str: llm response
+        """
+        response = ollama.chat(
+            model=self.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": self.system_prompt,
+                },
                 {
                     "role": "user",
                     "content": prompt,
