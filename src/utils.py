@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 import time
 
 import yaml
@@ -10,6 +11,19 @@ from logs.logging import logger
 with open("credentials.yml", "r") as file:
     credentials = yaml.safe_load(file)
 USERNAME = credentials["USERNAME"]
+
+
+def parse_response(response: str) -> str:
+    """remove thinking tokens and extract the final answer from the llm when using reasoning models
+    like deepseek.
+
+    Args:
+        response (str): llm response that may contain thinking tokens
+
+    Returns:
+        str: final answer
+    """
+    return re.sub(r"<think>.*?</think>", "", response, flags=re.DOTALL).strip()
 
 
 def count_files_in_folder(folder_path: str) -> int:

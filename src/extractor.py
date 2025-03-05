@@ -3,6 +3,7 @@ from .agent import Agent
 from typing import Union
 from logs.logging import logger
 from .prompt import PromptLoader
+from .utils import parse_response
 
 
 class Extractor:
@@ -18,6 +19,7 @@ class Extractor:
     def extract_cuisine(self):
         query = self.cuisine_prompt.format(food_review=self.text)
         cuisine = self.agent.extract_fields(query)
+        cuisine = parse_response(cuisine)
         return cuisine
 
     def extract_price(self):
@@ -27,13 +29,14 @@ class Extractor:
             print(price[0])
             query = self.price_prompt.format(price_list=price[0])
             price_output = self.agent.extract_fields(query)
+            price_output = parse_response(price_output)
             print(price_output)
             return price_output
         else:
             logger.error(f"No price rating found in {self.text}")
             return price
 
-    def extract_taste(self) -> Union[str, None]:
+    def extract_taste(self) -> Union[float, None]:
         """extracts taste rating from post. As taste is used to check if a review spans across more than 1 post,
         it is possible for a post to have no taste rating before merging with the subsequent post(s).
         Only the last post of a review will contain all the ratings.
@@ -44,7 +47,11 @@ class Extractor:
         pattern = r"Taste:\s*(.+)"
         taste = re.findall(pattern, self.text)
         if taste:
-            return taste[0]
+            if taste[0].lower() == "foodgasm":
+                taste = 11
+            else:
+                taste = float(taste[0].split("/")[0])
+            return taste
         else:
             logger.error(f"No taste rating found in {self.text}")
             return taste
@@ -53,7 +60,8 @@ class Extractor:
         pattern = r"Worth-it:\s*(.+)"
         worth_it = re.findall(pattern, self.text)
         if worth_it:
-            return worth_it[0]
+            worth_it = float(worth_it[0].split("/")[0])
+            return worth_it
         else:
             logger.error(f"No worth-it rating found in {self.text}")
             return worth_it

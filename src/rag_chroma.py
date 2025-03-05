@@ -13,6 +13,7 @@ from llama_index.core import (
     StorageContext,
     VectorStoreIndex,
     get_response_synthesizer,
+    PromptTemplate,
 )
 from llama_index.core.response_synthesizers import ResponseMode
 from llama_index.core.retrievers import VectorIndexAutoRetriever
@@ -27,6 +28,8 @@ import chromadb.utils.embedding_functions as embedding_functions
 from chromadb.utils.embedding_functions import OpenCLIPEmbeddingFunction
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from conf import conf
+from .utils import parse_response
+from .prompt import PromptLoader
 
 
 class RagChroma:
@@ -42,10 +45,25 @@ class RagChroma:
             embedding_function=image_embedding_model,
             data_loader=image_loader,
         )
-        Settings.llm = Ollama(model="mistral", request_timeout=500.0)
+        Settings.llm = Ollama(model=conf["llm"], request_timeout=500.0)
         # Settings.llm = ollama
         Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
         Settings.node_parser = SentenceSplitter(chunk_size=512, chunk_overlap=20)
+        self.load_system_prompt()
+
+    def load_system_prompt(self):
+        prompts = PromptLoader()
+        system_prompt = prompts.system_prompt
+        prompt_template = (
+            "Context information is below.\n"
+            "---------------------\n"
+            "{context_str}\n"
+            "---------------------\n"
+            f"{system_prompt}"
+            "Query: {query_str}\n"
+            "Answer: "
+        )
+        self.system_prompt = PromptTemplate(prompt_template)
 
     def add(
         self,
@@ -129,16 +147,13 @@ class RagChroma:
                 MetadataInfo(
                     name="cuisine",
                     type="str",
-                    description=(
-                        "Cuisine of the food, one of [Sports, Entertainment,"
-                        " Business, Music]"
-                    ),
+                    description=("Cuisine of the food"),
                 ),
                 MetadataInfo(
                     name="taste",
                     type="str",
                     description=(
-                        "Taste of the food. It is a rating between 0 and 10 where 7 is the average. The highest rating is foodgasm."
+                        "Taste of the food which is a measure of how delicious the food is. It is a rating between 0 and 11 where 7 is the average. The highest rating is 11."
                     ),
                 ),
                 MetadataInfo(
@@ -150,7 +165,9 @@ class RagChroma:
                     name="worth_it",
                     type="str",
                     description=(
-                        "The overall value of the meal which takes into account both the price and taste of the meal. It is a rating between 0 and 10."
+                        """The overall value of the meal which takes into account both the price and taste of the meal. It is a rating between 0 and 10 where 0 is the lowest, 7 is 
+                        the average, and 10 is the highest.  
+                        """
                     ),
                 ),
                 MetadataInfo(
@@ -166,17 +183,34 @@ class RagChroma:
         start_time = time.time()
         retriever = VectorIndexAutoRetriever(index, vector_store_info=vector_store_info)
 
-        retrieval_results = retriever.retrieve(query)
+        retry = 0
+        while retry < 3:
+            try:
+                retrieval_results = retriever.retrieve(query)
+                if retrieval_results:
+                    break
+                else:
+                    retry += 1
+                    logger.info("retrying retrieve documents from vector store")
+            except Exception as e:
+                logger.debug(f"Error retrieving results {e}")
+                retry += 1
+                logger.info("retrying retrieve documents from vector store")
+        if not retrieval_results:
+            logger.error(f"Unable to retrieve any results given the query: {query}")
         # get the top k results
         # retrieval_results = retrieval_results[:3]
         print(retrieval_results)
+
         response_synthesizer = get_response_synthesizer(
-            response_mode=ResponseMode.COMPACT
+            response_mode=ResponseMode.COMPACT, text_qa_template=self.system_prompt
         )
         response = response_synthesizer.synthesize(
-            "query text",
+            query,
             nodes=retrieval_results,
+            # streaming=True
         )
+        response = parse_response(str(response))
 
         # response_synthesizer = get_response_synthesizer(
         #     response_mode="tree_summarize", streaming=True
@@ -191,11 +225,33 @@ class RagChroma:
         #         print(text)
         #         yield text
 
+        # def generate():
+        #     capture = False
+        #     for text in response.response_gen:
+        #         if capture:
+        #             print(text)
+        #             yield text
+        #         elif "</think>" in text:
+        #             capture = True  # Start streaming from the next chunk
+        #             text_after_tag = text.split("</think>", 1)[
+        #                 -1
+        #             ]  # Get text after </think>
+        #             if text_after_tag.strip():  # Avoid yielding empty text
+        #                 print(text_after_tag)
+        #                 yield text_after_tag
+
         # return generate()
         end_time = time.time()
         elapsed_time = end_time - start_time
         print("Execution time:", elapsed_time, "seconds")
         return response
+
+    def get_relevant_images(self, query_text: str):
+        results = self.image_collection.query(
+            query_texts=[query_text],
+            n_results=5,
+            include=["distances", "uris"],
+        )
 
     def query_image_collection(self, query_text: str):
         """queries the image collection with query_text. After a user inputs a prompt, extract the key words from the prompt and pass them as the query_text.
@@ -208,6 +264,14 @@ class RagChroma:
         """
         results = self.image_collection.query(
             query_texts=[query_text],
+            # where={
+            #     "$or": [
+            #         {"id": doc_id}
+            #         for doc_id in ["2020-05-30_08-03-20_1", "2020-06-06_10-24-09_1"]
+            #     ]
+            # },
+            where={"id": "2020-05-30_08-03-20_1"},
+            # ids=["2020-05-30_08-03-20_1", "2020-06-06_10-24-09_1"],
             n_results=5,
             include=["distances", "uris"],
         )
@@ -223,7 +287,23 @@ class RagChroma:
 
 if __name__ == "__main__":
     rag_client = RagChroma("eatinara")
-    print(rag_client.query_index(query="what would you recommend for food under 30?"))
-    # print(rag_client.query_image_collection(query_text="corn"))
+    print(rag_client.image_collection.count())
+    # print(
+    #     rag_client.image_collection.get(
+    #         ids=["2020-05-30_08-03-20_1", "2020-06-06_10-24-09_1"]
+    #     )
+    # )
+    print(rag_client.text_collection.get(include=["documents", "metadatas"]))
+    # print(
+    #     rag_client.text_collection.query(
+    #         query_texts=["Japanese food"],
+    #         n_results=5,
+    #         where={"cuisine": "Japanese"},
+    #         where_document={"$contains": "japanese"},
+    #     )
+    # )
+    # # print(rag_client.query_index(query="what would you recommend for food under 30?"))
+    # print(rag_client.query_index(query="what are the best foods in takashimaya?"))
+    # print(rag_client.query_image_collection(query_text="salad"))
     # rag_client.get_documents(collection="text", ids=["2020-05-29_10-30-00_text"])
     # rag_client.delete_collection("eatinara")
