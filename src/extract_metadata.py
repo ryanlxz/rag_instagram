@@ -95,7 +95,7 @@ def extract_metadata(
             img_array = np.array(img)
             image_documents_list.append(img_array)
             image_id_list.append(f"{post}_{num}")
-            image_metadata_dict = {"cuisine": cuisine, "location": location}
+            image_metadata_dict = {"cuisine": cuisine, "location": location, "id": post}
             image_metadata_list.append(image_metadata_dict)
     return (
         text_documents_list,
