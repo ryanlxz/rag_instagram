@@ -2,6 +2,7 @@ import asyncio
 import os
 import re
 import time
+from typing import List
 
 import yaml
 
@@ -11,6 +12,26 @@ from logs.logging import logger
 with open("credentials.yml", "r") as file:
     credentials = yaml.safe_load(file)
 USERNAME = credentials["USERNAME"]
+
+
+def filter_relevant_images(image_uri: list, distances: list) -> List[tuple]:
+    """Given a list of retrieved images queried from the image collection, further filter the list
+     to get the most relevant images based on distance similarity.
+
+    Args:
+        image_uri (list): list of image uris
+        distances (list): list of image distance similarity
+
+    Returns:
+        List[tuple]: List of the most relevant images and their respective distance similarity
+    """
+    threshold = distances[0] * 1.2
+    filtered_images = [
+        (doc_id, dist)
+        for doc_id, dist in zip(image_uri, distances)
+        if dist <= threshold
+    ]
+    return filtered_images
 
 
 def parse_response(response: str) -> str:

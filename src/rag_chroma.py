@@ -28,7 +28,7 @@ import chromadb.utils.embedding_functions as embedding_functions
 from chromadb.utils.embedding_functions import OpenCLIPEmbeddingFunction
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from conf import conf
-from .utils import parse_response
+from .utils import parse_response, filter_relevant_images
 from .prompt import PromptLoader
 
 
@@ -264,14 +264,13 @@ class RagChroma:
         """
         results = self.image_collection.query(
             query_texts=[query_text],
-            # where={
-            #     "$or": [
-            #         {"id": doc_id}
-            #         for doc_id in ["2020-05-30_08-03-20_1", "2020-06-06_10-24-09_1"]
-            #     ]
-            # },
-            where={"id": "2020-05-30_08-03-20_1"},
-            # ids=["2020-05-30_08-03-20_1", "2020-06-06_10-24-09_1"],
+            where={
+                "$or": [
+                    {"id": doc_id}
+                    for doc_id in ["2020-05-30_08-03-20", "2020-06-06_10-24-09"]
+                ]
+            },
+            # where={"id": "2020-05-30_08-03-20"},
             n_results=5,
             include=["distances", "uris"],
         )
@@ -293,7 +292,7 @@ if __name__ == "__main__":
     #         ids=["2020-05-30_08-03-20_1", "2020-06-06_10-24-09_1"]
     #     )
     # )
-    print(rag_client.text_collection.get(include=["documents", "metadatas"]))
+    # print(rag_client.text_collection.get(include=["documents", "metadatas"]))
     # print(
     #     rag_client.text_collection.query(
     #         query_texts=["Japanese food"],
@@ -304,6 +303,11 @@ if __name__ == "__main__":
     # )
     # # print(rag_client.query_index(query="what would you recommend for food under 30?"))
     # print(rag_client.query_index(query="what are the best foods in takashimaya?"))
-    # print(rag_client.query_image_collection(query_text="salad"))
+    image_list = rag_client.query_image_collection(query_text="salad and corn")
+    print(
+        filter_relevant_images(
+            image_uri=image_list["uris"][0], distances=image_list["distances"][0]
+        )
+    )
     # rag_client.get_documents(collection="text", ids=["2020-05-29_10-30-00_text"])
     # rag_client.delete_collection("eatinara")
