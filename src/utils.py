@@ -128,12 +128,3 @@ def plot_images(image_paths: List[str]):
             if images_shown >= 9:
                 break
     plt.show()
-
-
-plot_images(
-    image_paths=[
-        "data/eatinara/2020-06-05_12-57-23_UTC.jpg",
-        "data/eatinara/2020-06-02_12-33-58_UTC_1.jpg",
-        "data/eatinara/2020-06-02_12-33-58_UTC_2.jpg",
-    ]
-)
