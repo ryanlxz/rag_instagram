@@ -47,7 +47,7 @@ class Extractor:
         pattern = r"Taste:\s*(.+)"
         taste = re.findall(pattern, self.text)
         if taste:
-            if taste[0].lower() == "foodgasm":
+            if "foodgasm" in taste[0].lower():
                 taste = 11
             else:
                 taste = float(taste[0].split("/")[0])

@@ -90,14 +90,3 @@ class FilterVectorStoreTool(Tool):
             where_document={"$contains": key_word},
         )
         return documents
-
-
-filter_vector_store = FilterVectorStoreTool()
-doc = filter_vector_store.forward(
-    category="cuisine",
-    category_value="japanese",
-    key_word="recommend",
-    relevant_text="best",
-    n_results=1,
-)
-print(doc)

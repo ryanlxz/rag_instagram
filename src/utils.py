@@ -3,7 +3,8 @@ import os
 import re
 import time
 from typing import List
-
+from PIL import Image
+import matplotlib.pyplot as plt
 import yaml
 
 from conf import conf
@@ -25,7 +26,7 @@ def filter_relevant_images(image_uri: list, distances: list) -> List[tuple]:
     Returns:
         List[tuple]: List of the most relevant images and their respective distance similarity
     """
-    threshold = distances[0] * 1.2
+    threshold = distances[0] * conf["image_relevance_threshold"]
     filtered_images = [
         (doc_id, dist)
         for doc_id, dist in zip(image_uri, distances)
@@ -111,10 +112,28 @@ def filter_pending_posts_for_update(
     return filtered_dict
 
 
-test_dict = {
-    "2024-09-27_16-54-51": 1,
-    "2024-09-28_10-34-58": 2,
-    "2024-09-30_13-48-48": 3,
-}
-latest_value = "2024-09-27_16-54-51"
-filter_pending_posts_for_update(test_dict, latest_value)
+def plot_images(image_paths: List[str]):
+    images_shown = 0
+    plt.figure(figsize=(16, 9))
+    for img_path in image_paths:
+        if os.path.isfile(img_path):
+            image = Image.open(img_path)
+
+            plt.subplot(2, 3, images_shown + 1)
+            plt.imshow(image)
+            plt.xticks([])
+            plt.yticks([])
+
+            images_shown += 1
+            if images_shown >= 9:
+                break
+    plt.show()
+
+
+plot_images(
+    image_paths=[
+        "data/eatinara/2020-06-05_12-57-23_UTC.jpg",
+        "data/eatinara/2020-06-02_12-33-58_UTC_1.jpg",
+        "data/eatinara/2020-06-02_12-33-58_UTC_2.jpg",
+    ]
+)

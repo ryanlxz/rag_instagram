@@ -1,3 +1,4 @@
+from email.mime import image
 import os
 from typing import List, Union
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
@@ -184,10 +185,11 @@ class RagChroma:
         retriever = VectorIndexAutoRetriever(index, vector_store_info=vector_store_info)
 
         retry = 0
+        self.retrieval_results = []
         while retry < 3:
             try:
-                retrieval_results = retriever.retrieve(query)
-                if retrieval_results:
+                self.retrieval_results = retriever.retrieve(query)
+                if self.retrieval_results:
                     break
                 else:
                     retry += 1
@@ -196,18 +198,17 @@ class RagChroma:
                 logger.debug(f"Error retrieving results {e}")
                 retry += 1
                 logger.info("retrying retrieve documents from vector store")
-        if not retrieval_results:
+        if not self.retrieval_results:
             logger.error(f"Unable to retrieve any results given the query: {query}")
         # get the top k results
         # retrieval_results = retrieval_results[:3]
-        print(retrieval_results)
 
         response_synthesizer = get_response_synthesizer(
             response_mode=ResponseMode.COMPACT, text_qa_template=self.system_prompt
         )
         response = response_synthesizer.synthesize(
             query,
-            nodes=retrieval_results,
+            nodes=self.retrieval_results,
             # streaming=True
         )
         response = parse_response(str(response))
@@ -253,28 +254,33 @@ class RagChroma:
             include=["distances", "uris"],
         )
 
-    def query_image_collection(self, query_text: str):
+    def query_image_collection(self, query_text: str, image_ids: List[str]):
         """queries the image collection with query_text. After a user inputs a prompt, extract the key words from the prompt and pass them as the query_text.
 
         Args:
-            query_text (str): _description_
+            query_text (str): relevant text for querying the image collection
+            image_ids (List[str]): list of image ids to filter
 
         Returns:
             _type_: _description_
         """
         results = self.image_collection.query(
-            query_texts=[query_text],
-            where={
-                "$or": [
-                    {"id": doc_id}
-                    for doc_id in ["2020-05-30_08-03-20", "2020-06-06_10-24-09"]
-                ]
-            },
+            query_texts=query_text,
+            where={"$or": [{"id": doc_id} for doc_id in image_ids]},
             # where={"id": "2020-05-30_08-03-20"},
             n_results=5,
             include=["distances", "uris"],
         )
         return results
+
+    def query_workflow(self, query: str):
+        response = self.query_index(query=query)
+        ids = [node.node.id_ for node in self.retrieval_results]
+        image_list = self.query_image_collection(query_text=response, image_ids=ids)
+        relevant_images = filter_relevant_images(
+            image_uri=image_list["uris"][0], distances=image_list["distances"][0]
+        )
+        # [('data/eatinara/2020-06-05_12-57-23_UTC.jpg', 1.408056052458937), ('data/eatinara/2020-06-02_12-33-58_UTC_1.jpg', 1.4813308509936796), ('data/eatinara/2020-06-02_12-33-58_UTC_2.jpg', 1.4862864724349267)]
 
     def delete_documents(self, ids: List[str]):
         self.collection.delete(ids=ids)
@@ -301,13 +307,18 @@ if __name__ == "__main__":
     #         where_document={"$contains": "japanese"},
     #     )
     # )
-    # # print(rag_client.query_index(query="what would you recommend for food under 30?"))
+    rag_client.query_workflow("what would you recommend for food?")
+    # retrieval_results = rag_client.query_index(
+    #     query="what would you recommend for food under 30?"
+    # )
+    # print(retrieval_results)
+
     # print(rag_client.query_index(query="what are the best foods in takashimaya?"))
-    image_list = rag_client.query_image_collection(query_text="salad and corn")
-    print(
-        filter_relevant_images(
-            image_uri=image_list["uris"][0], distances=image_list["distances"][0]
-        )
-    )
+    # image_list = rag_client.query_image_collection(query_text="salad and corn")
+    # print(
+    #     filter_relevant_images(
+    #         image_uri=image_list["uris"][0], distances=image_list["distances"][0]
+    #     )
+    # )
     # rag_client.get_documents(collection="text", ids=["2020-05-29_10-30-00_text"])
     # rag_client.delete_collection("eatinara")
